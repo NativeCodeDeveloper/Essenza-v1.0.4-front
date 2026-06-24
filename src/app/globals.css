@@ -148,18 +148,21 @@ html {
 
   body {
     @apply bg-background text-foreground overflow-x-hidden;
-    font-family: var(--font-body);
     line-height: 1.65;
     letter-spacing: 0.005em;
   }
 
-  h1,
-  h2,
-  h3,
-  h4,
-  h5,
-  h6 {
-    font-family: var(--font-display);
+  .essenza-public {
+    font-family: var(--font-manrope), "Helvetica Neue", sans-serif;
+  }
+
+  .essenza-public h1,
+  .essenza-public h2,
+  .essenza-public h3,
+  .essenza-public h4,
+  .essenza-public h5,
+  .essenza-public h6 {
+    font-family: var(--font-cormorant), "Times New Roman", serif;
     letter-spacing: -0.015em;
     line-height: 1.06;
     font-weight: 700;
