@@ -1,40 +1,37 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { motion, AnimatePresence } from "framer-motion";
-import {
-  Instagram,
-  Facebook,
-  MessageCircle,
-  ChevronLeft,
-  ChevronRight,
-} from "lucide-react";
-import { cn } from "@/lib/utils";
-
-const CF_BASE = "https://imagedelivery.net/aCBUhLfqUcxA2yhIBn1fNQ";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import toast from "react-hot-toast";
 
 const fallbackSlides = [
-  { id: "fallback-1", image: "/logoagendaclinica.png", alt: "Centro Médico", titulo: "", descripcion: "" },
+  {
+    id: "fallback-1",
+    image: "/fondo1.png",
+    alt: "Centro Integral ESSENZA",
+    badge: "Centro Integral ESSENZA",
+    title: "Bienestar completo con atención profesional y cercana.",
+    text: "Integramos medicina, psicología, estética y terapias complementarias para ayudarte a construir equilibrio entre cuerpo, mente y belleza.",
+  },
+  {
+    id: "fallback-2",
+    image: "/fondo2.png",
+    alt: "Atención personalizada en ESSENZA",
+    badge: "Enfoque integral",
+    title: "Experiencias de transformación con seguimiento real.",
+    text: "Cada plan es personalizado según tus necesidades, con acompañamiento continuo y asesoría especializada para resultados sostenibles.",
+  },
 ];
 
-function normalizeWhatsAppNumber(phone) {
-  return String(phone || "").replace(/[^\d]/g, "");
-}
+const ENABLE_LOGO_HERO = true;
 
 export default function Portada() {
   const [dataPortada, setDataPortada] = useState([]);
-  const [imageErrors, setImageErrors] = useState({});
-  const [activeIndex, setActiveIndex] = useState(0);
-  const [titulo, setTitulo] = useState("");
-  const [sobreNosotros, setSobreNosotros] = useState("");
-  const [datosEmpresa, setDatosEmpresa] = useState(null);
-  const touchStartX = useRef(null);
+  const [logoVisible, setLogoVisible] = useState(false);
   const API = process.env.NEXT_PUBLIC_API_URL;
-  const fallbackSobreNosotrosTitulo =
-    process.env.NEXT_PUBLIC_ABOUT_TITLE || "Psicologia infantil integral";
 
-  // ── Lógica original intacta ───────────────────────────
   async function cargarPortada() {
     try {
       const res = await fetch(`${API}/carruselPortada/seleccionarCarruselPortada`, {
@@ -42,336 +39,219 @@ export default function Portada() {
         headers: { Accept: "application/json" },
         mode: "cors",
       });
-      if (!res.ok) { setDataPortada([]); return; }
-      const data = await res.json();
-      setDataPortada(Array.isArray(data) ? data : []);
-    } catch {
-      setDataPortada([]);
-    }
-  }
-
-  async function cargarTitulos() {
-    try {
-      const res = await fetch(`${API}/titulo`);
-      if (!res.ok) return;
-      const data = await res.json();
-      if (!Array.isArray(data)) return;
-      const t1 = data.find((i) => Number(i.id_titulo) === 1);
-      const t3 = data.find((i) => Number(i.id_titulo) === 3);
-      if (t1?.titulo) setTitulo(t1.titulo);
-      if (t3?.titulo) setSobreNosotros(t3.titulo);
-    } catch {
-      // silencioso
-    }
-  }
-
-  async function cargarDatosEmpresa() {
-    try {
-      const res = await fetch(`${API}/datosempresa/seleccionartodos`, {
-        method: "GET",
-        headers: { Accept: "application/json" },
-        mode: "cors",
-      });
-
-      if (!res.ok) return;
 
       const data = await res.json();
-      const empresa = Array.isArray(data) ? data[0] : data;
-      setDatosEmpresa(empresa || null);
-    } catch {
-      setDatosEmpresa(null);
+
+      if (Array.isArray(data) && data.length > 0) {
+        setDataPortada(data);
+      } else {
+        setDataPortada([]);
+      }
+    } catch (err) {
+      return toast.error("No se ha podido cargar portada, contacte al administrador del sistema.");
     }
   }
 
   useEffect(() => {
     cargarPortada();
-    cargarTitulos();
-    cargarDatosEmpresa();
   }, []);
 
-  // ── Slides desde el backend ───────────────────────────
-  const backendSlides = dataPortada
-    .filter((item) => Number(item.estadoPublicacionPortada ?? 1) === 1)
-    .map((item, index) => ({
-      id: `portada-${item.id_publicacionesPortada ?? index}`,
-      image: item.imagenPortada
-        ? `${CF_BASE}/${item.imagenPortada}/portada`
-        : "/logoagendaclinica.png",
-      alt: item.tituloPortadaCarrusel || "Centro Médico",
-      titulo: item.tituloPortadaCarrusel || "",
-      descripcion: item.descripcionPublicacionesPortada || "",
-    }));
+  useEffect(() => {
+    const id = window.setTimeout(() => setLogoVisible(true), 80);
+    return () => window.clearTimeout(id);
+  }, []);
+
+  const defaultHeroSlides = dataPortada.map((portada) => ({
+    id: portada.tituloPortadaCarrusel,
+    image: `https://imagedelivery.net/aCBUhLfqUcxA2yhIBn1fNQ/${portada.imagenPortada}/portada`,
+    alt: portada.tituloPortadaCarrusel,
+    badge: "Centro Integral ESSENZA",
+    title: portada.tituloPortadaCarrusel,
+    text: portada.descripcionPublicacionesPortada,
+  }));
 
   const safeSlides = useMemo(
-    () => (backendSlides.length > 0 ? backendSlides : fallbackSlides),
-    [backendSlides]
+    () => (defaultHeroSlides.length > 0 ? defaultHeroSlides : fallbackSlides),
+    [defaultHeroSlides]
   );
+  const [activeIndex, setActiveIndex] = useState(0);
+  const touchStartX = useRef(null);
 
-  // ── Autoplay (5.2 s) ─────────────────────────────────
   useEffect(() => {
     if (safeSlides.length <= 1) return undefined;
-    const id = setInterval(() => {
-      setActiveIndex((c) => (c + 1) % safeSlides.length);
+
+    const intervalId = setInterval(() => {
+      setActiveIndex((current) => (current + 1) % safeSlides.length);
     }, 5200);
-    return () => clearInterval(id);
+
+    return () => clearInterval(intervalId);
   }, [safeSlides.length]);
 
-  // ── Navegación ────────────────────────────────────────
-  const goPrev = () =>
-    setActiveIndex((c) => (c - 1 + safeSlides.length) % safeSlides.length);
-  const goNext = () =>
-    setActiveIndex((c) => (c + 1) % safeSlides.length);
-
-  // ── Swipe táctil ─────────────────────────────────────
-  const handleTouchStart = (e) => {
-    touchStartX.current = e.touches[0]?.clientX ?? null;
+  const goPrev = () => {
+    setActiveIndex((current) => (current - 1 + safeSlides.length) % safeSlides.length);
   };
-  const handleTouchEnd = (e) => {
+
+  const goNext = () => {
+    setActiveIndex((current) => (current + 1) % safeSlides.length);
+  };
+
+  const handleTouchStart = (event) => {
+    touchStartX.current = event.touches[0]?.clientX ?? null;
+  };
+
+  const handleTouchEnd = (event) => {
     if (touchStartX.current == null) return;
-    const dist = (e.changedTouches[0]?.clientX ?? touchStartX.current) - touchStartX.current;
-    if (Math.abs(dist) > 45) { if (dist > 0) goPrev(); else goNext(); }
+
+    const endX = event.changedTouches[0]?.clientX ?? touchStartX.current;
+    const distance = endX - touchStartX.current;
+
+    if (Math.abs(distance) > 45) {
+      if (distance > 0) {
+        goPrev();
+      } else {
+        goNext();
+      }
+    }
+
     touchStartX.current = null;
   };
 
-  const currentSlide = safeSlides[activeIndex] ?? fallbackSlides[0];
-  const whatsappNumber = datosEmpresa?.contactoWhatsapp || datosEmpresa?.contactoTelefono || "";
-  const socialLinks = [
-    { icon: Instagram, href: datosEmpresa?.socialInstagramUrl, label: "Instagram" },
-    { icon: Facebook, href: datosEmpresa?.socialFacebookUrl, label: "Facebook" },
-    {
-      icon: MessageCircle,
-      href: whatsappNumber ? `https://wa.me/${normalizeWhatsAppNumber(whatsappNumber)}` : "",
-      label: "WhatsApp",
-    },
-  ].filter((item) => item.href);
+  const renderLegacyCarouselHero = () => (
+    <section id="inicio" className="relative -mt-24 min-h-screen scroll-mt-24 overflow-hidden text-[#fff4ee] md:-mt-28">
+      <div className="relative min-h-screen" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
+        {safeSlides.map((slide, index) => {
+          const isActive = index === activeIndex;
 
-  return (
-    <section
-      id="inicio"
-      className="relative w-full overflow-hidden bg-white min-h-screen flex flex-col items-center justify-center pt-20 pb-10"
-      onTouchStart={handleTouchStart}
-      onTouchEnd={handleTouchEnd}
-    >
-      <div className="mx-auto w-full max-w-5xl px-4">
+          return (
+            <article
+              key={slide.id}
+              className={[
+                "absolute inset-0 transition-opacity duration-700 ease-out",
+                isActive ? "opacity-100" : "pointer-events-none opacity-0",
+              ].join(" ")}
+            >
+              <img src={slide.image} alt={slide.alt} className="absolute inset-0 h-full w-full object-cover object-center" />
 
-        {/* ── Desktop — TestimonialCarousel layout ─────── */}
-        <div className="hidden md:flex relative items-center justify-center">
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_14%_12%,rgba(249,213,217,0.22),transparent_32%),linear-gradient(180deg,rgba(14,9,8,0.48)_0%,rgba(15,9,8,0.74)_58%,rgba(10,7,6,0.9)_100%)]" />
 
-          {/* Imagen izquierda */}
-          <div className="w-[470px] h-[470px] rounded-3xl overflow-hidden bg-slate-200 flex-shrink-0 shadow-xl shadow-slate-200/50">
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={currentSlide.id}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.4, ease: "easeInOut" }}
-                className="w-full h-full"
-              >
-                <img
-                  src={imageErrors[currentSlide.id] ? "/logoagendaclinica.png" : currentSlide.image}
-                  alt={currentSlide.alt}
-                  className="w-full h-full object-cover"
-                  draggable={false}
-                  onError={() =>
-                    setImageErrors((c) => ({ ...c, [currentSlide.id]: true }))
-                  }
-                />
-              </motion.div>
-            </AnimatePresence>
-          </div>
-
-          {/* Card solapada derecha */}
-          <div className="bg-white rounded-3xl shadow-2xl shadow-slate-200/60 border border-slate-100 p-8 ml-[-80px] z-10 max-w-xl flex-1">
-
-            {/* AC badge */}
-            <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3.5 py-1.5">
-              <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="text-xs font-semibold tracking-widest text-slate-500 uppercase">
-                Agenda Clínica
-              </span>
-            </div>
-
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={currentSlide.id + "-card"}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.4, ease: "easeInOut" }}
-              >
-                <div className="mb-5">
-                  {/* Título viene del portadaEdit (tituloPortadaCarrusel) */}
-                  <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 leading-tight mb-2">
-                    {currentSlide.titulo || "Tu Centro Médico"}
+              <div className="absolute inset-0 flex items-center justify-center px-6 pt-24 pb-24 text-center md:px-12 md:pt-28">
+                <div className="mx-auto max-w-4xl">
+                  <p className="text-[11px] uppercase tracking-[0.32em] text-[#f8ddd2]/84">{slide.badge}</p>
+                  <h1 className="mt-5 text-balance text-4xl leading-[0.96] tracking-[0.03em] text-[#fff4ee] sm:text-6xl lg:text-7xl">
+                    Salud integral para cuerpo, mente y belleza.
                   </h1>
-                </div>
-
-                {/* Descripción del slide o sobreNosotros */}
-                {(currentSlide.descripcion || sobreNosotros) && (
-                  <p className="text-base text-slate-600 leading-relaxed mb-7">
-                    {currentSlide.descripcion || sobreNosotros || fallbackSobreNosotrosTitulo}
+                  <h2 className="mx-auto mt-5 max-w-3xl text-balance text-2xl font-medium leading-tight tracking-[0.02em] text-[#ffe9de]/96 sm:text-3xl lg:text-4xl">
+                    {slide.title}
+                  </h2>
+                  <p className="mx-auto mt-6 max-w-3xl text-base leading-8 tracking-[0.02em] text-[#f5dfd4]/90 sm:text-lg">
+                    {slide.text}
                   </p>
-                )}
 
-                {/* CTAs */}
-                <div className="flex flex-wrap items-center gap-3 mb-7">
-                  <Link
-                    href="/agendaProfesionales"
-                    className="inline-flex items-center rounded-full bg-indigo-600 px-6 py-2.5 text-sm font-bold text-white shadow-md shadow-indigo-200 transition-all hover:bg-indigo-700 hover:scale-[1.02]"
-                  >
-                    Agendar hora
-                  </Link>
-                  <a
-                    href="#sobre-nosotros"
-                    className="inline-flex items-center rounded-full border border-slate-200 px-6 py-2.5 text-sm font-semibold text-slate-700 transition-all hover:border-indigo-300 hover:text-indigo-600"
-                  >
-                    Sobre nosotros
-                  </a>
-                </div>
-
-                {/* Social icons */}
-                <div className="flex gap-3">
-                  {socialLinks.map(({ icon: Icon, href, label }) => (
-                    <a
-                      key={label}
-                      href={href}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      aria-label={label}
-                      className="h-12 w-12 rounded-full bg-slate-900 flex items-center justify-center transition-all hover:bg-indigo-600 hover:scale-105"
+                  <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
+                    <Link
+                      href="/agendaProfesionales"
+                      aria-label="Agendar hora"
+                      className="inline-flex w-full justify-center rounded-full border border-[#f6dcc8]/45 bg-[linear-gradient(135deg,#f7dfcc_0%,#e7b27c_100%)] px-8 py-3.5 text-xs font-semibold uppercase tracking-[0.16em] text-[#2f1a12] transition duration-300 ease-out hover:brightness-105 sm:w-auto"
                     >
-                      <Icon className="h-5 w-5 text-white" />
-                    </a>
-                  ))}
-                </div>
-              </motion.div>
-            </AnimatePresence>
-          </div>
-        </div>
-
-        {/* ── Mobile ──────────────────────────────────────── */}
-        <div className="md:hidden max-w-sm mx-auto text-center">
-
-          {/* Imagen */}
-          <div className="w-full aspect-square rounded-3xl overflow-hidden mb-6 bg-slate-200 shadow-lg shadow-slate-200/50">
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={currentSlide.id + "-mobile-img"}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.4, ease: "easeInOut" }}
-                className="w-full h-full"
-              >
-                <img
-                  src={imageErrors[currentSlide.id] ? "/logoagendaclinica.png" : currentSlide.image}
-                  alt={currentSlide.alt}
-                  className="w-full h-full object-cover"
-                  draggable={false}
-                  onError={() =>
-                    setImageErrors((c) => ({ ...c, [currentSlide.id]: true }))
-                  }
-                />
-              </motion.div>
-            </AnimatePresence>
-          </div>
-
-          {/* Card content mobile */}
-          <div className="px-4">
-            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3.5 py-1.5">
-              <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="text-xs font-semibold tracking-widest text-slate-500 uppercase">
-                Agenda Clínica
-              </span>
-            </div>
-
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={currentSlide.id + "-mobile-card"}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.4, ease: "easeInOut" }}
-              >
-                <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 mb-2">
-                  {currentSlide.titulo || "Tu Centro Médico"}
-                </h1>
-                {(currentSlide.descripcion || sobreNosotros) && (
-                  <p className="text-slate-600 text-sm leading-relaxed mb-6">
-                    {currentSlide.descripcion || sobreNosotros || fallbackSobreNosotrosTitulo}
-                  </p>
-                )}
-                <div className="flex justify-center flex-wrap gap-3 mb-6">
-                  <Link
-                    href="/agendaProfesionales"
-                    className="inline-flex items-center rounded-full bg-indigo-600 px-6 py-2.5 text-sm font-bold text-white shadow-md shadow-indigo-200 transition-all hover:bg-indigo-700"
-                  >
-                    Agendar hora
-                  </Link>
-                  <a
-                    href="#sobre-nosotros"
-                    className="inline-flex items-center rounded-full border border-slate-200 px-6 py-2.5 text-sm font-semibold text-slate-700 hover:border-indigo-300 hover:text-indigo-600 transition-all"
-                  >
-                    Sobre nosotros
-                  </a>
-                </div>
-                <div className="flex justify-center gap-3">
-                  {socialLinks.map(({ icon: Icon, href, label }) => (
-                    <a
-                      key={label}
-                      href={href}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      aria-label={label}
-                      className="h-12 w-12 rounded-full bg-slate-900 flex items-center justify-center transition-all hover:bg-indigo-600"
+                      Reservar atención
+                    </Link>
+                    <Link
+                      href="/servicios"
+                      aria-label="Ver servicios integrales"
+                      className="inline-flex w-full justify-center rounded-full border border-[#f7ddd0]/40 bg-[#2f1e18]/56 px-8 py-3.5 text-xs font-semibold uppercase tracking-[0.16em] text-[#ffece2] transition duration-300 ease-out hover:bg-[#3b251e]/70 sm:w-auto"
                     >
-                      <Icon className="h-5 w-5 text-white" />
-                    </a>
-                  ))}
+                      Ver especialidades
+                    </Link>
+                  </div>
                 </div>
-              </motion.div>
-            </AnimatePresence>
-          </div>
-        </div>
+              </div>
+            </article>
+          );
+        })}
 
-        {/* ── Navegación inferior — solo si hay más de 1 slide ── */}
-        {safeSlides.length > 1 && (
-          <div className="flex justify-center items-center gap-6 mt-10">
+        <div className="absolute inset-x-0 bottom-7 z-20 flex items-center justify-between px-4 sm:px-8 md:px-12">
+          <div className="flex items-center gap-2">
+            {safeSlides.map((slide, index) => (
+              <button
+                key={slide.id}
+                type="button"
+                aria-label={`Mostrar slide ${index + 1}`}
+                onClick={() => setActiveIndex(index)}
+                className={[
+                  "h-2.5 rounded-full transition-all duration-300",
+                  activeIndex === index ? "w-8 bg-[#ffe8de]" : "w-2.5 bg-[#f3dad0]/50 hover:bg-[#fde7dd]/80",
+                ].join(" ")}
+              />
+            ))}
+          </div>
+
+          <div className="flex items-center gap-2">
             <button
-              onClick={goPrev}
+              type="button"
               aria-label="Slide anterior"
-              className="h-12 w-12 rounded-full bg-slate-100 border border-slate-200 shadow-md flex items-center justify-center hover:bg-slate-200 transition-colors cursor-pointer"
+              onClick={goPrev}
+              className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[#f5dbc9]/34 bg-[#1f1310]/60 text-[#ffe9df] transition duration-300 hover:bg-[#2d1c17]"
             >
-              <ChevronLeft className="h-6 w-6 text-slate-700" />
+              <ChevronLeft className="h-4 w-4" />
             </button>
-
-            <div className="flex gap-2">
-              {safeSlides.map((slide, idx) => (
-                <button
-                  key={slide.id}
-                  onClick={() => setActiveIndex(idx)}
-                  aria-label={`Slide ${idx + 1}`}
-                  className={cn(
-                    "h-3 rounded-full transition-all duration-300 cursor-pointer",
-                    idx === activeIndex
-                      ? "bg-slate-900 w-6"
-                      : "bg-slate-300 w-3 hover:bg-slate-400"
-                  )}
-                />
-              ))}
-            </div>
-
             <button
+              type="button"
+              aria-label="Siguiente slide"
               onClick={goNext}
-              aria-label="Slide siguiente"
-              className="h-12 w-12 rounded-full bg-slate-100 border border-slate-200 shadow-md flex items-center justify-center hover:bg-slate-200 transition-colors cursor-pointer"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[#f5dbc9]/34 bg-[#1f1310]/60 text-[#ffe9df] transition duration-300 hover:bg-[#2d1c17]"
             >
-              <ChevronRight className="h-6 w-6 text-slate-700" />
+              <ChevronRight className="h-4 w-4" />
             </button>
           </div>
-        )}
+        </div>
+      </div>
+    </section>
+  );
 
+  if (!ENABLE_LOGO_HERO) {
+    return renderLegacyCarouselHero();
+  }
+
+  // Legacy hero preserved for rollback:
+  // return renderLegacyCarouselHero();
+  return (
+    <section id="inicio" className="relative -mt-24 h-screen scroll-mt-24 overflow-hidden md:-mt-28">
+      <div className="absolute inset-0 bg-[linear-gradient(180deg,#dddddb_0%,#e7e3da_40%,#ece6db_76%,#dfd9cf_100%)]" />
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_22%_16%,rgba(255,255,255,0.74),transparent_38%),radial-gradient(circle_at_88%_14%,rgba(234,220,194,0.55),transparent_40%)]" />
+
+      <div className="relative flex h-screen items-center justify-center px-5 pt-24 pb-10 md:pt-28">
+        <div
+          className={[
+            "flex w-full max-w-[min(1040px,92vw)] flex-col items-center transition-all duration-[1400ms] ease-[cubic-bezier(0.2,0.75,0.16,1)]",
+            logoVisible ? "translate-y-0 scale-100 opacity-100 blur-0" : "translate-y-10 scale-[0.9] opacity-0 blur-[3px]",
+          ].join(" ")}
+        >
+          <Image
+            src="/logofull.png"
+            alt="Centro Integral ESSENZA"
+            width={1600}
+            height={900}
+            priority
+            className="h-auto max-h-[62vh] w-full object-contain drop-shadow-[0_16px_40px_rgba(0,0,0,0.18)]"
+          />
+
+          <div className="mt-6 flex w-full flex-col items-center justify-center gap-3 sm:flex-row">
+            <Link
+              href="/agendaProfesionales"
+              aria-label="Agendar hora"
+              className="inline-flex w-full justify-center rounded-full border border-[#d2b27f]/55 bg-[linear-gradient(135deg,#e6cfaa_0%,#d9b07b_100%)] px-8 py-3 text-xs font-semibold uppercase tracking-[0.16em] text-[#2f1a12] transition duration-300 ease-out hover:brightness-105 sm:w-auto"
+            >
+              Reservar atención
+            </Link>
+            <Link
+              href="/servicios"
+              aria-label="Ver servicios integrales"
+              className="inline-flex w-full justify-center rounded-full border border-[#b99f7a]/45 bg-[#6e5b45]/12 px-8 py-3 text-xs font-semibold uppercase tracking-[0.16em] text-[#6f5128] transition duration-300 ease-out hover:bg-[#6e5b45]/20 sm:w-auto"
+            >
+              Ver especialidades
+            </Link>
+          </div>
+        </div>
       </div>
     </section>
   );

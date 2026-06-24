@@ -1,71 +1,18 @@
 "use client";
 
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { motion } from "framer-motion";
-import { ChevronLeft, ChevronRight, CalendarCheck, ArrowRight, BookOpen } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import RevealOnScroll from "@/Componentes/RevealOnScroll";
 
-const CF_BASE = "https://imagedelivery.net/aCBUhLfqUcxA2yhIBn1fNQ";
-const FALLBACK_IMAGE = "/logoagendaclinica.png";
-
-function PublicationCard({ item }) {
-  const [imgError, setImgError] = useState(false);
-
-  return (
-    <motion.div
-      className="group w-64 flex-shrink-0"
-      whileHover={{ y: -5 }}
-      transition={{ type: "spring", stiffness: 300 }}
-    >
-      <div className="overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm">
-        <div className="relative h-40 w-full overflow-hidden bg-slate-100">
-          <img
-            src={imgError ? FALLBACK_IMAGE : item.image}
-            alt="Publicación"
-            loading="lazy"
-            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-            onError={() => setImgError(true)}
-          />
-        </div>
-        <div className="p-4">
-          {item.titulo && (
-            <h3 className="text-sm font-semibold text-slate-900 leading-tight mb-1 line-clamp-1">
-              {item.titulo}
-            </h3>
-          )}
-          <p className="text-sm text-slate-500 leading-relaxed line-clamp-3">
-            {item.descripcion || "Publicación del centro médico."}
-          </p>
-        </div>
-      </div>
-    </motion.div>
-  );
-}
-
-function SkeletonCard() {
-  return (
-    <div className="w-64 flex-shrink-0 opacity-50">
-      <div className="overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm">
-        <div className="h-40 w-full bg-slate-100 animate-pulse" />
-        <div className="p-4 space-y-2">
-          <div className="h-3 bg-slate-100 rounded-full animate-pulse" />
-          <div className="h-3 bg-slate-100 rounded-full animate-pulse w-3/4" />
-          <div className="h-3 bg-slate-100 rounded-full animate-pulse w-1/2" />
-        </div>
-      </div>
-    </div>
-  );
-}
+const FALLBACK_CASE_IMAGE = "/ac3.png";
 
 export default function Seccion3() {
-  const carouselRef = useRef(null);
-  const [isAtStart, setIsAtStart] = useState(true);
-  const [isAtEnd, setIsAtEnd] = useState(false);
+  const scrollerRef = useRef(null);
+  const [imageErrors, setImageErrors] = useState({});
   const [listaPublicaciones, setListaPublicaciones] = useState([]);
   const API = process.env.NEXT_PUBLIC_API_URL;
 
-  // PRESCRIPTION: DO NOT ALTER BACKEND FETCH LOGIC
   async function listarPublicacionesSeccion3() {
     try {
       const res = await fetch(`${API}/publicaciones/seleccionarPublicaciones`, {
@@ -94,137 +41,118 @@ export default function Seccion3() {
     listarPublicacionesSeccion3();
   }, []);
 
-  const publicaciones = listaPublicaciones.map((p, i) => ({
-    id: p.id_publicaciones ?? i,
-    titulo: p.tituloPublicaciones ?? null,
-    descripcion: p.descripcionPublicaciones,
-    image: `${CF_BASE}/${p.imagenPublicaciones_primera}/card`,
+  const clinicalCases = listaPublicaciones.map((publicaciones) => ({
+    title: publicaciones.descripcionPublicaciones,
+    image: `https://imagedelivery.net/aCBUhLfqUcxA2yhIBn1fNQ/${publicaciones.imagenPublicaciones_primera}/card`,
   }));
 
-  const scroll = (direction) => {
-    if (!carouselRef.current) return;
-    const scrollAmount = carouselRef.current.clientWidth * 0.8;
-    const newScrollLeft =
-      carouselRef.current.scrollLeft + (direction === "right" ? scrollAmount : -scrollAmount);
-    carouselRef.current.scrollTo({ left: newScrollLeft, behavior: "smooth" });
+  const scrollByAmount = (direction) => {
+    const container = scrollerRef.current;
+    if (!container) return;
+
+    const firstCardWidth = container.firstElementChild?.clientWidth ?? 0;
+    const styles = window.getComputedStyle(container);
+    const gap = parseFloat(styles.columnGap || styles.gap || "0");
+    const amount =
+      firstCardWidth > 0 ? Math.round(firstCardWidth + gap) : Math.round(container.clientWidth * 0.82);
+    const nextLeft = direction === "left" ? -amount : amount;
+
+    container.scrollBy({ left: nextLeft, behavior: "smooth" });
   };
-
-  const checkScrollPosition = useCallback(() => {
-    if (!carouselRef.current) return;
-    const { scrollLeft, scrollWidth, clientWidth } = carouselRef.current;
-    setIsAtStart(scrollLeft < 10);
-    setIsAtEnd(scrollWidth - scrollLeft - clientWidth < 10);
-  }, []);
-
-  useEffect(() => {
-    const el = carouselRef.current;
-    if (!el) return;
-    el.addEventListener("scroll", checkScrollPosition);
-    checkScrollPosition();
-    return () => el.removeEventListener("scroll", checkScrollPosition);
-  }, [checkScrollPosition, listaPublicaciones]);
 
   return (
     <>
-      <section id="publicaciones" className="scroll-mt-24 bg-white py-20 sm:py-28">
+      <section id="casos-clinicos" className="scroll-mt-24 bg-transparent py-22 text-[#5d462d] sm:py-28">
         <div className="mx-auto w-full max-w-7xl px-5 md:px-8 lg:px-10">
           <RevealOnScroll>
-            <div className="w-full rounded-2xl border border-slate-100 bg-slate-50 p-5 shadow-sm md:p-8">
-              <div className="grid grid-cols-1 items-center gap-8 lg:grid-cols-12">
-
-                {/* ── Left: info panel ──────────────────────── */}
-                <div className="flex flex-col items-center text-center lg:col-span-3 lg:items-start lg:text-left">
-                  <div className="flex items-center gap-3 mb-5">
-                    <div className="h-10 w-10 rounded-full bg-indigo-600 flex items-center justify-center shrink-0">
-                      <BookOpen className="h-5 w-5 text-white" />
-                    </div>
-                    <p className="text-sm text-slate-500 lg:hidden">Contenido del centro</p>
-                  </div>
-                  <p className="hidden lg:block text-sm text-slate-500 mb-1">
-                    Contenido del centro
-                  </p>
-                  <div className="flex items-center gap-3 mb-1">
-                    <span className="text-xs font-semibold tracking-widest text-indigo-600 uppercase">
-                      Publicaciones
-                    </span>
-                  </div>
-                  <h2 className="mt-2 text-2xl font-bold tracking-tight text-slate-900 leading-tight">
-                    Conoce más antes de agendar
-                  </h2>
-                  <p className="mt-2 text-sm text-slate-500 leading-relaxed">
-                    Casos clínicos, tratamientos y novedades que este centro comparte para que llegues informado a tu consulta.
-                  </p>
-                  <Link
-                    href="/agendaProfesionales"
-                    className="mt-6 inline-flex items-center gap-2 rounded-full bg-indigo-600 px-6 py-2.5 text-sm font-bold text-white shadow-md shadow-indigo-200 transition-all hover:bg-indigo-700 hover:scale-[1.02] w-full max-w-xs justify-center lg:w-auto"
-                  >
-                    Agendar hora
-                    <ArrowRight className="h-4 w-4" />
-                  </Link>
-                </div>
-
-                {/* ── Right: carousel ───────────────────────── */}
-                <div className="relative lg:col-span-9">
-                  <div ref={carouselRef} className="overflow-x-auto hide-scrollbar">
-                    <motion.div className="flex gap-4 px-1 py-2">
-                      {publicaciones.length > 0
-                        ? publicaciones.map((item) => (
-                            <PublicationCard key={item.id} item={item} />
-                          ))
-                        : [1, 2, 3].map((n) => <SkeletonCard key={n} />)}
-                    </motion.div>
-                  </div>
-
-                  {/* Nav left */}
-                  {!isAtStart && (
-                    <button
-                      onClick={() => scroll("left")}
-                      aria-label="Desplazar izquierda"
-                      className="absolute left-0 top-1/2 -translate-x-1/2 -translate-y-1/2 h-9 w-9 rounded-full border border-slate-200 bg-white shadow-md z-10 hidden md:flex items-center justify-center hover:bg-slate-50 transition-colors"
-                    >
-                      <ChevronLeft className="h-5 w-5 text-slate-700" />
-                    </button>
-                  )}
-
-                  {/* Nav right */}
-                  {!isAtEnd && (
-                    <button
-                      onClick={() => scroll("right")}
-                      aria-label="Desplazar derecha"
-                      className="absolute right-0 top-1/2 translate-x-1/2 -translate-y-1/2 h-9 w-9 rounded-full border border-slate-200 bg-white shadow-md z-10 hidden md:flex items-center justify-center hover:bg-slate-50 transition-colors"
-                    >
-                      <ChevronRight className="h-5 w-5 text-slate-700" />
-                    </button>
-                  )}
-                </div>
-
+            <div className="grid gap-6 lg:grid-cols-[1fr_22rem] lg:items-end">
+              <div>
+                <p className="text-xs uppercase tracking-[0.24em] text-[#9a7750]/72">Experiencias y resultados</p>
+                <h2 className="mt-4 max-w-4xl text-balance text-4xl leading-[1] text-[#4f361d] sm:text-5xl">
+                  Historias reales de personas que eligieron un enfoque integral.
+                </h2>
+              </div>
+              <div className="rounded-3xl border border-[#d9bea0]/35 bg-[linear-gradient(180deg,rgba(252,245,234,0.95)_0%,rgba(243,230,211,0.9)_100%)] p-5 shadow-[0_16px_36px_-22px_rgba(122,91,55,0.28)]">
+                <p className="text-[11px] uppercase tracking-[0.22em] text-[#8e6e47]/76">Acompañamiento</p>
+                <p className="mt-2 text-sm leading-7 text-[#6a5032]/86">
+                  Trabajamos con objetivos claros, seguimiento profesional y una mirada humana en cada etapa.
+                </p>
               </div>
             </div>
           </RevealOnScroll>
+
+          <div className="mt-8 flex items-center justify-end gap-2">
+            <button
+              type="button"
+              onClick={() => scrollByAmount("left")}
+              aria-label="Desplazar resultados hacia la izquierda"
+              className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[#e6d0b0]/58 text-[#664b2d] transition duration-300 hover:bg-[#dbc29e]/72"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </button>
+            <button
+              type="button"
+              onClick={() => scrollByAmount("right")}
+              aria-label="Desplazar resultados hacia la derecha"
+              className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[#e6d0b0]/58 text-[#664b2d] transition duration-300 hover:bg-[#dbc29e]/72"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </button>
+          </div>
+
+          <div ref={scrollerRef} className="hide-scrollbar mt-6 flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-smooth pb-2">
+            {clinicalCases.map((item, index) => (
+              <RevealOnScroll
+                key={item.title}
+                className="w-[86%] shrink-0 snap-start sm:w-[66%] lg:w-[41%]"
+                delayClass={index === 0 ? "delay-100" : "delay-150"}
+              >
+                <article className="flex h-full flex-col overflow-hidden rounded-3xl border border-[#d8bc9d]/35 bg-[linear-gradient(180deg,rgba(252,245,234,0.95)_0%,rgba(243,230,211,0.9)_100%)] shadow-[0_16px_36px_-22px_rgba(122,91,55,0.28)]">
+                  <div className="relative aspect-[4/3] overflow-hidden">
+                    <img
+                      src={imageErrors[item.image] ? FALLBACK_CASE_IMAGE : item.image}
+                      alt={item.title}
+                      loading="lazy"
+                      className="h-full w-full object-cover object-center"
+                      onError={() =>
+                        setImageErrors((current) => ({
+                          ...current,
+                          [item.image]: true,
+                        }))
+                      }
+                    />
+                    <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(42,28,20,0.03)_0%,rgba(42,28,20,0.34)_100%)]" />
+                  </div>
+                  <div className="flex justify-center p-6">
+                    <h3 className="text-center text-2xl font-medium leading-7 tracking-[0.02em] text-[#573e24]">
+                      {item.title}
+                    </h3>
+                  </div>
+                </article>
+              </RevealOnScroll>
+            ))}
+          </div>
         </div>
       </section>
 
-      {/* CTA block */}
-      <section id="agenda" className="bg-slate-50 py-16 sm:py-24">
-        <div className="mx-auto w-full max-w-5xl px-5 md:px-8">
+      <section id="agenda" className="scroll-mt-24 bg-transparent py-20 text-[#5d462d] sm:py-24">
+        <div className="mx-auto w-full max-w-7xl px-5 md:px-8 lg:px-10">
           <RevealOnScroll>
-            <div className="relative overflow-hidden rounded-[2.5rem] bg-indigo-600 px-6 py-16 text-center shadow-lg sm:px-12">
-              <div className="absolute top-0 right-0 -mt-16 -mr-16 h-64 w-64 rounded-full bg-white opacity-5 mix-blend-overlay blur-3xl" />
-              <div className="absolute bottom-0 left-0 -mb-16 -ml-16 h-64 w-64 rounded-full bg-indigo-400 opacity-20 mix-blend-overlay blur-3xl" />
-              <div className="relative z-10">
-                <h2 className="mx-auto max-w-2xl text-4xl font-bold tracking-tight text-white mb-6">
-                  Tu próxima hora está a un clic
-                </h2>
-                <p className="mx-auto max-w-xl text-lg text-indigo-100 mb-10">
-                  Agenda en línea las 24 horas, sin llamadas ni esperas. Elige el profesional, el día y la hora que mejor se adapte a ti.
-                </p>
-                <Link
-                  href="/agendaProfesionales"
-                  className="inline-flex rounded-full bg-white px-8 py-4 font-bold text-indigo-600 transition hover:bg-slate-50 hover:scale-105 shadow-md"
-                >
-                  Agendar mi hora
-                </Link>
-              </div>
+            <div className="rounded-[2rem] border border-[#d8bc9d]/35 bg-[linear-gradient(160deg,rgba(252,245,234,0.95)_0%,rgba(243,230,211,0.9)_100%)] px-6 py-14 text-center shadow-[0_18px_40px_-24px_rgba(122,91,55,0.3)] sm:px-10">
+              <p className="text-xs uppercase tracking-[0.24em] text-[#9a7750]/72">Agenda ESSENZA</p>
+              <h2 className="mx-auto mt-4 max-w-3xl text-balance text-4xl leading-[1] text-[#4f361d] sm:text-5xl">
+                Reserva tu evaluación y recibe un plan integral personalizado.
+              </h2>
+              <p className="mx-auto mt-5 max-w-2xl text-sm leading-8 tracking-[0.02em] text-[#6a5032]/86 sm:text-base">
+                Te guiamos con un enfoque completo para que avances con claridad, confianza y acompañamiento profesional constante.
+              </p>
+              <Link
+                href="/agendaProfesionales"
+                aria-label="Reservar hora"
+                className="mt-8 inline-flex w-full max-w-xs justify-center rounded-full border border-[#f6dcc7]/45 bg-[linear-gradient(135deg,#f7dfcc_0%,#e7b27c_100%)] px-8 py-3 text-xs font-semibold uppercase tracking-[0.16em] text-[#2f1a12] transition duration-300 ease-out hover:brightness-105"
+              >
+                Reservar evaluación
+              </Link>
             </div>
           </RevealOnScroll>
         </div>

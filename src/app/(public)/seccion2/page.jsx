@@ -1,36 +1,34 @@
 'use client'
 
+import Link from "next/link";
 import RevealOnScroll from "@/Componentes/RevealOnScroll";
+import toast from "react-hot-toast";
 import { useEffect, useRef, useState } from "react";
-import Image from "next/image";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 export default function Seccion2() {
   const API = process.env.NEXT_PUBLIC_API_URL;
   const [infoData, setInfoData] = useState([]);
-
-  const carouselRef = useRef(null);
-  const isDragging = useRef(false);
-  const startX = useRef(0);
-  const scrollLeft = useRef(0);
+  const scrollerRef = useRef(null);
 
   const fallbackServices = [
     {
       id: "srv-1",
-      name: "Atención médica general",
-      description: "Evaluación integral de salud, orientación profesional y seguimiento.",
-      image: "/logoagendaclinica.png",
+      name: "Atención médica general y familiar",
+      description: "Evaluación integral de salud, orientación profesional y acompañamiento continuo.",
+      image: "/fondo2.png",
     },
     {
       id: "srv-2",
-      name: "Tratamientos Metabólicos",
-      description: "Planes personalizados para la salud a largo plazo.",
-      image: "/logoagendaclinica.png",
+      name: "Atención psicológica para niños y adultos",
+      description: "Apoyo emocional para ansiedad, estrés y procesos personales en todas las etapas.",
+      image: "/fondo3.png",
     },
     {
       id: "srv-3",
-      name: "Nutrición Clínica",
-      description: "Orientación alimentaria para mejorar tu calidad de vida.",
-      image: "/logoagendaclinica.png",
+      name: "Nutrición y bienestar metabólico",
+      description: "Planes personalizados para mejorar hábitos, energía y salud a largo plazo.",
+      image: "/fondo1.png",
     },
   ];
 
@@ -49,12 +47,14 @@ export default function Seccion2() {
         mode: "cors",
       });
 
-      if (!res.ok) return;
+      if (!res.ok) {
+        return toast.error(`No ha sido posible cargar las imagenes del sistema contacte a soporte de NativeCode`);
+      }
 
       const data = await res.json();
       setInfoData(data);
     } catch {
-      console.warn("Could not load original seccion2 data, using fallbacks");
+      return toast.error(`No ha sido posible cargar las imagenes del sistema contacte a soporte de NativeCode`);
     }
   }
 
@@ -64,102 +64,101 @@ export default function Seccion2() {
 
   const content = services.length > 0 ? services : fallbackServices;
 
-  const handleMouseDown = (e) => {
-    isDragging.current = true;
-    startX.current = e.pageX - carouselRef.current.offsetLeft;
-    scrollLeft.current = carouselRef.current.scrollLeft;
-    carouselRef.current.style.cursor = "grabbing";
-  };
-
-  const handleMouseMove = (e) => {
-    if (!isDragging.current) return;
-    e.preventDefault();
-    const x = e.pageX - carouselRef.current.offsetLeft;
-    const walk = (x - startX.current) * 1.5;
-    carouselRef.current.scrollLeft = scrollLeft.current - walk;
-  };
-
-  const handleMouseUp = () => {
-    isDragging.current = false;
-    if (carouselRef.current) carouselRef.current.style.cursor = "grab";
-  };
-
-  const handleMouseLeave = () => {
-    isDragging.current = false;
-    if (carouselRef.current) carouselRef.current.style.cursor = "grab";
+  const scrollByAmount = (direction) => {
+    const container = scrollerRef.current;
+    if (!container) return;
+    const firstCardWidth = container.firstElementChild?.clientWidth ?? 0;
+    const styles = window.getComputedStyle(container);
+    const gap = parseFloat(styles.columnGap || styles.gap || "0");
+    const amount =
+      firstCardWidth > 0 ? Math.round(firstCardWidth + gap) : Math.round(container.clientWidth * 0.82);
+    container.scrollBy({ left: direction === "left" ? -amount : amount, behavior: "smooth" });
   };
 
   return (
-    <section id="servicios" className="scroll-mt-24 bg-slate-50 py-20 text-slate-800 sm:py-28 overflow-hidden">
+    <section id="servicios" className="scroll-mt-24 bg-transparent py-22 text-[#5d462d] sm:py-28">
       <div className="mx-auto w-full max-w-7xl px-5 md:px-8 lg:px-10">
-
-        {/* Header */}
         <RevealOnScroll>
-          <div className="max-w-3xl mb-16">
-            <div className="flex items-center gap-4 mb-4">
-              <div className="h-px w-10 bg-indigo-600" />
-              <span className="text-sm font-semibold tracking-widest text-indigo-600 uppercase">
-                Servicios
-              </span>
+          <div className="grid items-end gap-6 lg:grid-cols-[1fr_auto]">
+            <div>
+              <p className="text-xs uppercase tracking-[0.24em] text-[#9a7750]/72">Especialidades integrales</p>
+              <h2 className="mt-4 max-w-4xl text-balance text-4xl leading-[1] text-[#4f361d] sm:text-5xl">
+                Medicina, psicología, estética y terapias en un mismo ecosistema de bienestar.
+              </h2>
             </div>
-            <h2 className="text-4xl font-extrabold tracking-tight text-slate-900 sm:text-5xl mb-6">
-              Nuestros Servicios
-            </h2>
-            <p className="text-lg text-slate-600">
-              Explora los tratamientos y servicios disponibles en este centro. Agenda tu hora directamente en línea, de forma rápida y sin llamadas.
-            </p>
+            <Link
+              href="/servicios"
+              className="inline-flex justify-center rounded-full border border-[#d7b792]/48 bg-[#f2ddc2]/36 px-6 py-3 text-xs font-semibold uppercase tracking-[0.16em] text-[#5b4228] transition hover:bg-[#e8cfac]/44"
+            >
+              Ver detalle completo
+            </Link>
           </div>
         </RevealOnScroll>
 
-        {/* Carousel */}
-        <div
-          ref={carouselRef}
-          className="mt-16 flex gap-8 overflow-x-auto pb-4 select-none"
-          style={{
-            cursor: "grab",
-            scrollbarWidth: "none",
-            msOverflowStyle: "none",
-            WebkitOverflowScrolling: "touch",
-          }}
-          onMouseDown={handleMouseDown}
-          onMouseMove={handleMouseMove}
-          onMouseUp={handleMouseUp}
-          onMouseLeave={handleMouseLeave}
-        >
-          {content.map((service, index) => (
-            <article
-              key={service.id ?? index}
-              className="relative shrink-0 w-[80vw] sm:w-[45vw] lg:w-[30vw] h-120 overflow-hidden rounded-[2.5rem] bg-slate-200 shadow-md group"
-              draggable={false}
-            >
-              {/* Background Full Image */}
-              <Image
-                src={service.image}
-                alt={service.name}
-                fill
-                draggable={false}
-                sizes="(max-width: 768px) 80vw, (max-width: 1200px) 45vw, 30vw"
-                style={{ objectFit: "cover" }}
-                className="transition duration-500 ease-out group-hover:scale-105"
-              />
-
-              {/* Gradient overlay */}
-              <div className="absolute inset-x-0 bottom-0 h-1/2 bg-linear-to-t from-slate-900/80 to-transparent pointer-events-none" />
-
-              {/* Top Right Label */}
-              <div className="absolute top-6 right-6 rounded-full bg-indigo-600/90 backdrop-blur-md px-5 py-2 text-sm font-semibold text-white shadow-lg max-w-[80%] text-center truncate">
-                {service.name}
-              </div>
-
-              {/* Bottom Description */}
-              <div className="absolute bottom-6 left-6 right-6 p-2 pointer-events-none text-left">
-                <h3 className="text-white font-bold text-lg leading-tight mb-1 drop-shadow-md">{service.name}</h3>
-                <p className="text-white/80 text-sm line-clamp-2">{service.description}</p>
-              </div>
-            </article>
-          ))}
+        <div className="mt-8 flex items-center justify-end gap-2">
+          <button
+            type="button"
+            onClick={() => scrollByAmount("left")}
+            aria-label="Desplazar servicios hacia la izquierda"
+            className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[#e6d0b0]/58 text-[#664b2d] transition duration-300 hover:bg-[#dbc29e]/72"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </button>
+          <button
+            type="button"
+            onClick={() => scrollByAmount("right")}
+            aria-label="Desplazar servicios hacia la derecha"
+            className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[#e6d0b0]/58 text-[#664b2d] transition duration-300 hover:bg-[#dbc29e]/72"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </button>
         </div>
 
+        <div
+          ref={scrollerRef}
+          className="hide-scrollbar mt-6 flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-smooth pb-2"
+        >
+          {content.map((service, index) => (
+            <RevealOnScroll
+              key={service.id ?? service.name}
+              className="w-[86%] shrink-0 snap-start sm:w-[66%] lg:w-[41%]"
+              delayClass={index % 2 === 0 ? "delay-100" : "delay-150"}
+            >
+              <Link
+                href="/agendaProfesionales"
+                aria-label={`Agendar para ${service.name}`}
+                className="group flex h-full flex-col overflow-hidden rounded-3xl border border-[#d8bc9c]/35 bg-[linear-gradient(180deg,rgba(252,245,234,0.95)_0%,rgba(243,230,211,0.9)_100%)] shadow-[0_16px_36px_-22px_rgba(122,91,55,0.28)] transition duration-300 ease-out hover:-translate-y-1"
+              >
+                <div className="relative aspect-16/10 overflow-hidden">
+                  <img
+                    src={service.image}
+                    alt={service.name}
+                    className="h-full w-full object-cover transition duration-500 ease-out group-hover:scale-105"
+                  />
+                  <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(42,28,20,0.03)_0%,rgba(42,28,20,0.34)_100%)]" />
+                </div>
+                <div className="flex flex-1 flex-col p-6">
+                  <h3 className="text-xl font-medium tracking-[0.02em] text-[#573e24]">
+                    {service.name}
+                  </h3>
+                  <p className="mt-2 flex-1 text-sm leading-7 tracking-[0.02em] text-[#6b5233]/82">
+                    {service.description || "Atención personalizada con acompañamiento profesional y seguimiento continuo para resultados sostenibles."}
+                  </p>
+                  <div className="mt-5 flex items-center justify-between border-t border-[#d8bc9d]/36 pt-4">
+                    <span className="text-[11px] font-medium uppercase tracking-[0.2em] text-[#8a663d] transition-colors duration-300 group-hover:text-[#6f4d28]">
+                      Agendar hora
+                    </span>
+                    <div className="flex h-7 w-7 items-center justify-center rounded-full border border-[#d4b38f]/36 bg-[#efdbc0]/42 transition-all duration-300 group-hover:border-[#bf9568]/44 group-hover:bg-[#e8c7a1]/48">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 text-[#7a5a35] transition-all duration-300 group-hover:translate-x-px group-hover:text-[#5f411f]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+              </Link>
+            </RevealOnScroll>
+          ))}
+        </div>
       </div>
     </section>
   );

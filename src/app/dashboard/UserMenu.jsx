@@ -2,11 +2,30 @@
 
 import { useUser, useClerk } from "@clerk/nextjs";
 import Link from "next/link";
+import { useState, useEffect } from "react";
 import { getDashboardRoleFromUser, getDashboardRoleLabel } from "@/lib/dashboard-access";
 
 export default function UserMenu() {
     const { user, isLoaded } = useUser();
     const { signOut } = useClerk();
+    const [empresaNombre, setEmpresaNombre] = useState("");
+
+    useEffect(() => {
+        const API = process.env.NEXT_PUBLIC_API_URL;
+        if (!API) return;
+        fetch(`${API}/datosempresa/seleccionartodos`, {
+            method: "GET",
+            headers: { Accept: "application/json" },
+            mode: "cors",
+        })
+            .then(res => res.ok ? res.json() : null)
+            .then(data => {
+                if (!data) return;
+                const d = Array.isArray(data) ? data[0] : data;
+                if (d?.empresaNombre) setEmpresaNombre(d.empresaNombre);
+            })
+            .catch(() => {});
+    }, []);
 
     if (!isLoaded) {
         return (
@@ -27,6 +46,29 @@ export default function UserMenu() {
     const roleLabel = getDashboardRoleLabel(role);
     const avatar = user?.imageUrl;
 
+    if (!user) {
+        return (
+            <div className="px-3 pb-3 pt-2 border-t border-[#EAEAEC]">
+                <div className="flex items-center gap-3 rounded-2xl border border-violet-100 bg-[#F8F7FC] px-3 py-3">
+                    <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-[#EDE9FE] text-[#6E56CF]">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 11c0-1.105.895-2 2-2s2 .895 2 2v1m-7 0V9a3 3 0 016 0m-8 3h10a2 2 0 012 2v5a2 2 0 01-2 2H7a2 2 0 01-2-2v-5a2 2 0 012-2z" />
+                        </svg>
+                    </div>
+                    <div className="min-w-0 flex-1">
+                        <p className="truncate text-[13px] font-semibold leading-tight text-slate-800">
+                            Acceso temporal
+                        </p>
+                        <p className="mt-0.5 truncate text-[11px] leading-tight text-slate-400">
+                            Dashboard sin autenticación
+                        </p>
+                    </div>
+                    <span className="h-2 w-2 rounded-full bg-emerald-400" title="Acceso habilitado" />
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="px-3 pb-3 pt-2 border-t border-[#EAEAEC]">
             <details className="group">
@@ -43,6 +85,11 @@ export default function UserMenu() {
 
                     {/* Info */}
                     <div className="flex-1 min-w-0">
+                        {empresaNombre && (
+                            <p className="truncate text-[10px] font-semibold text-[#6E56CF] leading-tight uppercase tracking-wide">
+                                {empresaNombre}
+                            </p>
+                        )}
                         <p className="truncate text-[13px] font-semibold text-slate-800 leading-tight">
                             {name}
                         </p>

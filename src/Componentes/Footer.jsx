@@ -1,309 +1,156 @@
-"use client";
-
-import { useEffect, useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
-import { Facebook, Globe, Instagram, Linkedin, Mail, MapPin, MessageCircle, Phone, Shield, Lock, Twitter, Youtube } from "lucide-react";
+import { Facebook, Instagram, Mail, MapPin, MessageCircle, Phone } from "lucide-react";
 
-const navLinks = [
-  { label: "Inicio", href: "#inicio" },
-  { label: "Servicios", href: "#servicios" },
-  { label: "Testimonios", href: "#testimonios" },
-  { label: "Agendar hora", href: "/agendaProfesionales" },
+const footerLinks = [
+  { label: "Inicio", href: "/#inicio" },
+  { label: "Enfoque integral", href: "/#porque-elegirnos" },
+  { label: "Especialidades", href: "/#servicios" },
+  { label: "Resultados", href: "/#casos-clinicos" },
+  { label: "Servicios", href: "/servicios" },
+  { label: "Contacto", href: "/contacto" },
 ];
 
-function normalizeWhatsAppNumber(phone) {
-  return String(phone || "").replace(/[^\d]/g, "");
-}
-
-function extractIframeSrc(value) {
-  const rawValue = String(value || "").trim();
-  const iframeSrc = rawValue.match(/src=["']([^"']+)["']/i)?.[1];
-  return iframeSrc || rawValue;
-}
-
-const initialContact = {
-  companyName: "Agenda Clinica",
-  phone: "",
-  whatsappNumber: "",
-  whatsappUrl: "",
-  email: "",
-  emailUrl: "",
-  address: "",
-  mapsUrl: "",
-  instagramHandle: "",
-  socials: {
-    instagram: "",
-    facebook: "",
-    twitter: "",
-    linkedin: "",
-    tiktok: "",
-    youtube: "",
-    other: "",
-    otherLabel: "Otra red",
+const socialLinks = [
+  {
+    label: "Instagram",
+    href: "https://www.instagram.com/essenza.centrointegral?igsh=czR0NXFnMHl1bzR5",
+    icon: Instagram,
   },
-};
+  {
+    label: "Facebook",
+    href: "https://www.facebook.com/search/top?q=Essenza%20Pitrufquen",
+    icon: Facebook,
+  },
+  {
+    label: "WhatsApp",
+    href: "https://wa.me/56987728500",
+    icon: MessageCircle,
+  },
+];
 
-export default function Footer() {
-  const API = process.env.NEXT_PUBLIC_API_URL;
-  const [publicContact, setPublicContact] = useState(initialContact);
-
-  async function cargarDatosEmpresaFooter() {
-    try {
-      const res = await fetch(`${API}/datosempresa/seleccionartodos`, {
-        method: "GET",
-        headers: { Accept: "application/json" },
-        mode: "cors",
-      });
-
-      if (!res.ok) {
-        return;
-      }
-
-      const data = await res.json();
-      const datosEmpresa = Array.isArray(data) ? data[0] : data;
-
-      if (!datosEmpresa) {
-        return;
-      }
-
-      const whatsappNumber = datosEmpresa.contactoWhatsapp || datosEmpresa.contactoTelefono || "";
-      const email = datosEmpresa.contactoEmail || "";
-
-      setPublicContact({
-        companyName: datosEmpresa.empresaNombre || "Agenda Clinica",
-        phone: datosEmpresa.contactoTelefono || "",
-        whatsappNumber,
-        whatsappUrl: whatsappNumber ? `https://wa.me/${normalizeWhatsAppNumber(whatsappNumber)}` : "",
-        email,
-        emailUrl: email ? `mailto:${email}` : "",
-        address: datosEmpresa.contactoDireccion || "",
-        mapsUrl: extractIframeSrc(datosEmpresa.contactoUrlMapa),
-        instagramHandle: datosEmpresa.socialInstagramHandle || "",
-        socials: {
-          instagram: datosEmpresa.socialInstagramUrl || "",
-          facebook: datosEmpresa.socialFacebookUrl || "",
-          twitter: datosEmpresa.socialTwitterUrl || "",
-          linkedin: datosEmpresa.socialLinkedinUrl || "",
-          tiktok: datosEmpresa.socialTiktokUrl || "",
-          youtube: datosEmpresa.socialYoutubeUrl || "",
-          other: datosEmpresa.socialOtraUrl || "",
-          otherLabel: datosEmpresa.socialOtraEtiqueta || "Otra red",
-        },
-      });
-    } catch (error) {
-      console.error("Error cargando datos de empresa para footer", error);
-    }
-  }
-
-  useEffect(() => {
-    cargarDatosEmpresaFooter();
-  }, []);
-
-  const socialLinks = [
-    { label: "Instagram", href: publicContact.socials.instagram, icon: Instagram },
-    { label: "Facebook", href: publicContact.socials.facebook, icon: Facebook },
-    { label: "WhatsApp", href: publicContact.whatsappUrl, icon: MessageCircle },
-    { label: "Twitter", href: publicContact.socials.twitter, icon: Twitter },
-    { label: "LinkedIn", href: publicContact.socials.linkedin, icon: Linkedin },
-    { label: "YouTube", href: publicContact.socials.youtube, icon: Youtube },
-    { label: publicContact.socials.otherLabel, href: publicContact.socials.other, icon: Globe },
-  ].filter((item) => item.href);
-  const hasContactInfo = publicContact.phone || publicContact.email || publicContact.address;
-  const hasMap = publicContact.mapsUrl && publicContact.mapsUrl.startsWith("https://www.google.com/maps/embed");
-
+export default function FooterPremiumMedico() {
   return (
-    <footer id="footer" className="relative overflow-hidden bg-slate-950 text-slate-300 pt-20 pb-10">
+    <footer id="footer" className="relative overflow-hidden bg-transparent text-[#5d462d]">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_12%_8%,rgba(248,205,214,0.2),transparent_36%),radial-gradient(circle_at_88%_14%,rgba(232,188,124,0.18),transparent_36%),linear-gradient(180deg,rgba(228,223,213,0.76)_0%,rgba(236,231,220,0.88)_100%)]" />
 
-      {/* Background watermark */}
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 flex justify-center select-none z-0">
-        <span className="text-[12vw] font-black leading-none text-white whitespace-nowrap opacity-[0.05]">
-          AGENDA CLÍNICA
-        </span>
-      </div>
-
-      <div className="relative z-10 mx-auto w-full max-w-7xl px-5 md:px-8 lg:px-10">
-        <div className="grid gap-12 lg:grid-cols-12 lg:gap-8 border-b border-slate-800 pb-16">
-
-          {/* Brand */}
-          <div className="lg:col-span-4">
-            <Link href="/" aria-label="Ir al inicio" className="group mb-6 inline-flex items-center">
-              <div className="transition-transform duration-300 group-hover:scale-205">
-                <Image
-                  src="/logo.png"
-                  alt="Agenda Clínica"
-                  width={180}
-                  height={22}
-                  className="h-35 w-auto object-contain"
+      <div className="relative mx-auto w-full max-w-7xl px-5 py-16 md:px-8 lg:px-10">
+        <div className="grid gap-6 lg:grid-cols-12">
+          <section className="rounded-[2rem] bg-[linear-gradient(145deg,rgba(255,251,244,0.78)_0%,rgba(246,238,224,0.86)_100%)] p-7 shadow-[0_20px_40px_-28px_rgba(122,92,54,0.45)] lg:col-span-5">
+            <div className="flex items-center gap-4">
+              <div className="inline-flex shrink-0 items-center justify-center rounded-full bg-white/92 p-1.5 shadow-[0_12px_30px_-18px_rgba(0,0,0,0.28)]">
+                <img
+                  src="/logo1.png"
+                  alt="Logo Centro Integral ESSENZA"
+                  width={84}
+                  height={84}
+                  className="h-[72px] w-[72px] object-contain sm:h-[84px] sm:w-[84px]"
                 />
               </div>
-            </Link>
+            </div>
 
-            <p className="text-slate-400 leading-relaxed max-w-xs mb-8 mt-4">
-              Agenda tu hora en línea de forma rápida y segura, en cualquier momento del día.
+            <p className="mt-6 text-sm leading-7 tracking-[0.02em] text-[#6f5537]/86">
+              Un espacio creado para el bienestar completo, con atención profesional, cercana y personalizada en medicina, psicología, estética y terapias complementarias.
             </p>
 
-            {/* Trust badges */}
-            <div className="flex flex-wrap gap-3">
-              <div className="inline-flex items-center gap-1.5 rounded-full border border-slate-700 bg-slate-900 px-3 py-1.5 text-xs text-slate-400">
-                <Shield className="h-3.5 w-3.5 text-indigo-400" />
-                SSL Seguro
-              </div>
-              <div className="inline-flex items-center gap-1.5 rounded-full border border-slate-700 bg-slate-900 px-3 py-1.5 text-xs text-slate-400">
-                <Lock className="h-3.5 w-3.5 text-indigo-400" />
-                Datos Cifrados
-              </div>
+            <div className="mt-7 space-y-2.5 text-sm text-[#694d2f]/92">
+              <a href="tel:+56987728500" className="inline-flex items-center gap-2 transition hover:text-[#4a3218]">
+                <Phone className="h-4 w-4" />
+                +56 9 8772 8500
+              </a>
+              <a href="mailto:Centrointegral.essenza@gmail.com" className="flex items-center gap-2 transition hover:text-[#4a3218]">
+                <Mail className="h-4 w-4" />
+                Centrointegral.essenza@gmail.com
+              </a>
+              <a
+                href="https://maps.google.com/?q=12+de+Febrero+926,+Pitrufquen,+Chile"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 transition hover:text-[#4a3218]"
+              >
+                <MapPin className="h-4 w-4" />
+                12 de Febrero 926, Pitrufquén, Novena Región
+              </a>
             </div>
-          </div>
+          </section>
 
-          {/* Links grid */}
-          <div className="lg:col-span-8 grid grid-cols-1 gap-10 sm:grid-cols-2 lg:w-fit lg:grid-cols-[200px_220px_360px] lg:gap-10">
-
-            {/* Navegación */}
-            <div>
-              <h4 className="text-white font-semibold mb-5 uppercase tracking-wider text-xs">Explorar</h4>
-              <ul className="space-y-3.5">
-                {navLinks.map((item) => (
+          <section className="rounded-[2rem] bg-[linear-gradient(155deg,rgba(255,249,238,0.76)_0%,rgba(244,235,219,0.84)_100%)] p-7 shadow-[0_20px_40px_-30px_rgba(122,92,54,0.34)] lg:col-span-3">
+            <p className="text-[11px] uppercase tracking-[0.22em] text-[#876740]/68">Navegación</p>
+            <nav aria-label="Links del pie de página" className="mt-5">
+              <ul className="space-y-3">
+                {footerLinks.map((item) => (
                   <li key={item.label}>
-                    <a
+                    <Link
                       href={item.href}
-                      className="text-slate-400 text-sm transition hover:text-white"
+                      className="inline-flex text-sm tracking-[0.05em] text-[#6b5133]/90 transition hover:text-[#4a3016]"
                     >
                       {item.label}
-                    </a>
+                    </Link>
                   </li>
                 ))}
               </ul>
+            </nav>
+
+            <div className="mt-8 flex items-center gap-2">
+              {socialLinks.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <a
+                    key={item.label}
+                    href={item.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={item.label}
+                    className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-[#efd8bc]/55 text-[#654a2b] transition hover:bg-[#e3c39a]/72 hover:text-[#4a3218]"
+                  >
+                    <Icon className="h-4 w-4" />
+                  </a>
+                );
+              })}
             </div>
+          </section>
 
-            {/* Redes sociales */}
-            <div>
-              {socialLinks.length > 0 && (
-                <>
-                  <h4 className="text-white font-semibold mb-5 uppercase tracking-wider text-xs">Redes sociales</h4>
-                  <div className="space-y-3 text-sm text-slate-400">
-                    {socialLinks.map((item) => {
-                      const Icon = item.icon;
-                      return (
-                        <a
-                          key={item.label}
-                          href={item.href}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-3 transition hover:text-white"
-                        >
-                          <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-slate-800 text-slate-400 transition hover:bg-indigo-600 hover:text-white">
-                            <Icon className="h-4 w-4" />
-                          </span>
-                          <span>{item.label}</span>
-                        </a>
-                      );
-                    })}
-                  </div>
-                </>
-              )}
+          <section className="rounded-[2rem] bg-[linear-gradient(155deg,rgba(255,249,238,0.76)_0%,rgba(244,235,219,0.84)_100%)] p-5 shadow-[0_20px_40px_-30px_rgba(122,92,54,0.34)] sm:p-6 lg:col-span-4">
+            <p className="text-[11px] uppercase tracking-[0.22em] text-[#876740]/68">Ubicación</p>
+            <h4 className="mt-3 text-2xl leading-tight text-[#5f4426]">
+              Pitrufquén, Novena Región
+            </h4>
+            <p className="mt-2 text-sm leading-7 text-[#6d5335]/84">
+              Atendemos a hombres, mujeres y niños con enfoque integral de salud física, emocional y estética.
+            </p>
 
-              {!hasContactInfo && socialLinks.length === 0 && (
-                <p className="text-sm text-slate-500">
-                  Configura los datos de empresa desde el dashboard.
-                </p>
-              )}
+            <a
+              href="https://maps.google.com/?q=12+de+Febrero+926,+Pitrufquen,+Chile"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-full bg-[linear-gradient(135deg,#f4ddc1_0%,#ddb37d_100%)] px-5 py-2.5 text-xs font-semibold uppercase tracking-[0.16em] text-[#2f1a12] transition hover:brightness-105"
+            >
+              <MapPin className="h-4 w-4" />
+              Abrir en Google Maps
+            </a>
+
+            <div className="mt-5 overflow-hidden rounded-2xl shadow-[0_10px_30px_-18px_rgba(0,0,0,0.35)]">
+              <iframe
+                title="Mapa ubicación Centro Integral ESSENZA"
+                src="https://www.google.com/maps?q=12%20de%20Febrero%20926%2C%20Pitrufquen%2C%20Chile&output=embed"
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+                className="h-[240px] w-full"
+              />
             </div>
-
-            {/* Contacto */}
-            <div>
-              <h4 className="text-white font-semibold mb-5 uppercase tracking-wider text-xs">Contacto</h4>
-              <div className="space-y-3.5 text-sm text-slate-400">
-                <div className="flex items-center gap-3">
-                  <Phone className="h-4 w-4 shrink-0 text-indigo-400" />
-                  {publicContact.phone ? (
-                    <a
-                      href={`tel:${publicContact.phone}`}
-                      className="transition hover:text-white"
-                    >
-                      {publicContact.phone}
-                    </a>
-                  ) : (
-                    <span>Proximamente</span>
-                  )}
-                </div>
-                <div className="flex items-center gap-3">
-                  <Mail className="h-4 w-4 shrink-0 text-indigo-400" />
-                  {publicContact.email ? (
-                    <a
-                      href={publicContact.emailUrl}
-                      className="break-all transition hover:text-white"
-                    >
-                      {publicContact.email}
-                    </a>
-                  ) : (
-                    <span>Proximamente</span>
-                  )}
-                </div>
-                <div className="flex items-start gap-3">
-                  <MapPin className="h-4 w-4 shrink-0 text-indigo-400 mt-0.5" />
-                  {publicContact.address ? (
-                    publicContact.mapsUrl ? (
-                      <a
-                        href={publicContact.mapsUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="transition hover:text-white"
-                      >
-                        {publicContact.address}
-                      </a>
-                    ) : (
-                      <span>{publicContact.address}</span>
-                    )
-                  ) : (
-                    <span>Proximamente</span>
-                  )}
-                </div>
-              </div>
-              {hasMap && (
-                <div className="mt-5 overflow-hidden rounded-2xl border border-slate-800 bg-slate-900">
-                  <iframe
-                    src={publicContact.mapsUrl}
-                    width="600"
-                    height="450"
-                    style={{ border: 0 }}
-                    allowFullScreen
-                    loading="lazy"
-                    referrerPolicy="no-referrer-when-downgrade"
-                    className="h-56 w-full"
-                    title={`Ubicacion de ${publicContact.companyName}`}
-                  />
-                </div>
-              )}
-            </div>
-
-          </div>
+          </section>
         </div>
 
-        {/* Bottom bar */}
-        <div className="mt-8 flex flex-col gap-3 text-xs text-slate-500 sm:flex-row sm:items-center sm:justify-between px-1">
+        <div className="mt-8 flex flex-col gap-3 py-4 text-[11px] text-[#7c6140]/72 md:flex-row md:items-center md:justify-between">
+          <p>© {new Date().getFullYear()} Centro Integral ESSENZA. Todos los derechos reservados.</p>
           <p>
-            © {new Date().getFullYear()} {publicContact.companyName}. Todos los derechos reservados.
-          </p>
-          <p className="flex items-center gap-1.5">
             Desarrollado por{" "}
             <a
               href="https://nativecode.cl"
               target="_blank"
               rel="noopener noreferrer"
-              className="font-medium text-slate-400 hover:text-white transition"
+              className="font-semibold text-[#6b4a23] underline decoration-[#c59b6d] underline-offset-2 transition hover:text-[#4f3217]"
             >
-              NativeCode
-            </a>
-            <span className="text-slate-700">·</span>
-            Potenciado por{" "}
-            <a
-              href="https://agendaclinicas.cl"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="font-medium text-slate-300 hover:text-white transition"
-            >
-              Agenda Clínica
+              nativecode.cl
             </a>
           </p>
         </div>

@@ -11,9 +11,9 @@ html {
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: -apple-system, system-ui, BlinkMacSystemFont, "SF Pro Display", var(--font-inter), sans-serif;
-  --font-display: -apple-system, system-ui, BlinkMacSystemFont, "SF Pro Display", var(--font-inter), sans-serif;
-  --font-body: -apple-system, system-ui, BlinkMacSystemFont, "SF Pro Display", var(--font-inter), sans-serif;
+  --font-sans: var(--font-manrope), "Helvetica Neue", sans-serif;
+  --font-display: var(--font-cormorant), "Times New Roman", serif;
+  --font-body: var(--font-manrope), "Helvetica Neue", sans-serif;
 
   /* Premium Deep Medical Navy Override for 'indigo' */
   --color-indigo-50: #eff6ff;

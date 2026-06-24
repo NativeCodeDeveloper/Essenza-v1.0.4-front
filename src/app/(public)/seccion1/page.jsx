@@ -1,92 +1,76 @@
-"use client";
-
-import { useEffect, useState } from "react";
-import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import Image from "next/image";
 import RevealOnScroll from "@/Componentes/RevealOnScroll";
 
+const pillars = [
+  {
+    title: "Enfoque realmente integral",
+    text: "Unificamos medicina, psicología y estética para abordar cada proceso desde la raíz y no solo los síntomas.",
+    logoSrc: "/logo1.png",
+  },
+  {
+    title: "Atención profesional cercana",
+    text: "Nuestro equipo acompaña cada etapa con escucha activa, criterio clínico y seguimiento continuo.",
+    logoSrc: "/logo1.png",
+  },
+  {
+    title: "Bienestar emocional y mental",
+    text: "La salud psicológica forma parte del tratamiento para lograr avances sostenibles y equilibrio real.",
+    logoSrc: "/logo1.png",
+  },
+  {
+    title: "Resultados visibles y conscientes",
+    text: "Diseñamos experiencias de transformación personalizadas para potenciar tu mejor versión.",
+    logoSrc: "/logo1.png",
+  },
+];
+
 export default function Seccion1() {
-  const API = process.env.NEXT_PUBLIC_API_URL;
-  const [sobreNosotros, setSobreNosotros] = useState("");
-  const [primerParrafo, setPrimerParrafo] = useState("");
-  const [segundoParrafo, setSegundoParrafo] = useState("");
-
-  async function cargarContenido() {
-    try {
-      const res = await fetch(`${API}/datosempresa/seleccionartodos`, {
-        method: "GET",
-        headers: { Accept: "application/json" },
-        mode: "cors",
-      });
-
-      if (!res.ok) {
-        return;
-      }
-
-      const data = await res.json();
-      const datosEmpresa = Array.isArray(data) ? data[0] : data;
-
-      setSobreNosotros(datosEmpresa?.sobreNosotrosTitulo || "");
-      setPrimerParrafo(datosEmpresa?.sobreNosotrosParrafo1 || "");
-      setSegundoParrafo(datosEmpresa?.sobreNosotrosParrafo2 || "");
-    } catch (err) {
-      console.error("Error cargando datos de empresa", err);
-    }
-  }
-
-  useEffect(() => {
-    cargarContenido();
-  }, []);
-
-  const tituloSobreNosotros = sobreNosotros || "Sobre Nosotros";
-  const descripcionPrincipal =
-    primerParrafo ||
-    "Brindamos acompanamiento profesional con una mirada cercana, respetuosa y especializada.";
-  const descripcionSecundaria =
-    segundoParrafo ||
-    "Trabajamos para fortalecer el bienestar y entregar orientacion profesional en cada etapa.";
-
   return (
-    <section
-      id="sobre-nosotros"
-      className="scroll-mt-24 bg-white py-20 sm:py-28 border-t border-slate-100"
-    >
-      <div className="mx-auto w-full max-w-7xl px-5 md:px-8 lg:px-10">
-        <RevealOnScroll>
-          <div className="grid gap-12 lg:grid-cols-2 lg:gap-24 items-start">
-
-            {/* Left */}
-            <div>
-              <div className="flex items-center gap-4 mb-5">
-                <div className="h-px w-10 bg-indigo-600" />
-                <span className="text-sm font-semibold tracking-widest text-indigo-600 uppercase">
-                  Nosotros
-                </span>
-              </div>
-              <h2 className="text-4xl font-extrabold tracking-tight text-slate-900 sm:text-5xl leading-tight mb-7">
-                {tituloSobreNosotros}
-              </h2>
-              <p className="text-lg text-slate-600 leading-relaxed">
-                {descripcionPrincipal}
-              </p>
-            </div>
-
-            {/* Right */}
-            <div className="flex flex-col gap-8 lg:pt-16">
-              <p className="text-lg text-slate-600 leading-relaxed">
-                {descripcionSecundaria}
-              </p>
-              <Link
-                href="/agendaProfesionales"
-                className="group inline-flex items-center gap-2 font-semibold text-slate-900 hover:text-indigo-600 transition-colors w-fit"
-              >
-                Reservar una hora
-                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-              </Link>
-            </div>
-
+    <section id="porque-elegirnos" className="scroll-mt-24 bg-transparent py-22 text-[#5d462d] sm:py-28">
+      <div className="mx-auto grid w-full max-w-7xl gap-8 px-5 md:px-8 lg:grid-cols-12 lg:gap-10 lg:px-10">
+        <RevealOnScroll className="lg:col-span-4">
+          <div className="sticky top-28 rounded-[2rem] bg-[linear-gradient(165deg,rgba(74,46,39,0.48)_0%,rgba(26,16,13,0.9)_100%)] p-7 shadow-[0_30px_80px_-56px_rgba(228,175,110,0.55)]">
+            <p className="text-xs uppercase tracking-[0.24em] text-[#f4dbcd]/68">Por qué elegir ESSENZA</p>
+            <h2 className="mt-4 text-balance text-4xl leading-[1] text-[#fff3ea] sm:text-5xl">
+              Te atendemos de forma completa, no fragmentada.
+            </h2>
+            <p className="mt-5 text-sm leading-7 text-[#f6dfd4]/82 sm:text-base">
+              En Centro Integral ESSENZA no ofrecemos servicios aislados. Construimos planes
+              personalizados para que avances con claridad, seguimiento y resultados sostenibles.
+            </p>
           </div>
         </RevealOnScroll>
+
+        <div className="grid gap-4 sm:grid-cols-2 lg:col-span-8">
+          {pillars.map((item, index) => {
+            const shifted = index % 2 === 0 ? "sm:-translate-y-3" : "sm:translate-y-3";
+
+            return (
+              <RevealOnScroll key={item.title} className="h-full">
+                <article
+                  className={[
+                    "h-full rounded-3xl border border-[#d9bea0]/35 bg-[linear-gradient(180deg,rgba(253,246,236,0.92)_0%,rgba(244,232,214,0.9)_100%)] p-6 text-[#5d452c] shadow-[0_16px_36px_-24px_rgba(126,94,58,0.32)] transition duration-300 ease-out hover:-translate-y-1",
+                    shifted,
+                  ].join(" ")}
+                >
+                  <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-[#edd4b1]/45">
+                    {item.logoSrc ? (
+                      <Image
+                        src={item.logoSrc}
+                        alt="Logo Essenza"
+                        width={24}
+                        height={24}
+                        className="h-6 w-6 rounded-full object-cover"
+                      />
+                    ) : null}
+                  </div>
+                  <h3 className="mt-5 text-2xl font-medium tracking-[0.01em] text-[#5a4127]">{item.title}</h3>
+                  <p className="mt-3 text-sm leading-7 tracking-[0.02em] text-[#705739]/86">{item.text}</p>
+                </article>
+              </RevealOnScroll>
+            );
+          })}
+        </div>
       </div>
     </section>
   );
